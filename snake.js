@@ -5,12 +5,33 @@
 class Snake {
   /**
    * @description todo
+   * @param {int} initX
+   * @param {int} initY
+   * @param {int} initSize
    */
-  constructor() {
-    this.headDirection; // probably an int?
-    this.length = 2;
+  constructor(initX, initY, initSize) {
+    /* 1=N, 2=E, 3=S, 4=W */
+    this.headDirection = Math.ceil(Math.random() * 4);
+    this.length = initSize;
     // array w/ size of this.length, head is at 0
     this.position = new Array(this.length);
+    this.position[0] = [initX, initY]; // fence post
+    for (let i = 1; i < initSize; i++) { // set starting positions
+      switch (this.headDirection) {
+        case 1: // north
+          this.position[i] = [initX, initY+i];
+          break;
+        case 2: // east
+          this.position[i] = [initX-i, initY];
+          break;
+        case 3: // south
+          this.position[i] = [initX, initY-i];
+          break;
+        case 4: // west
+          this.position[i] = [initX+i, initY];
+          break;
+      }
+    }
   }
 
   /**
@@ -19,14 +40,38 @@ class Snake {
    * that will be the game runner, not sure about tail detection yet
    */
   moveForward() {
+    const temp = [];
+    for (let i = 1; i < this.length; i++) {
+      temp.push(this.position[i-1]);
+    }
 
+    const curX = this.position[0][0];
+    const curY = this.position[0][1];
+    switch (this.headDirection) {
+      case 1: // north
+        this.position[0] = [curX, curY-1];
+        break;
+      case 2: // east
+        this.position[0] = [curX+1, curY];
+        break;
+      case 3: // south
+        this.position[0] = [curX, curY+1];
+        break;
+      case 4: // west
+        this.position[0] = [curX-1, curY];
+        break;
+    }
+    // not the sexiest solution
+    this.position.splice(1, this.position.length, ...temp);
   }
 
   /**
    * @description turn the snake, ie update the headDirection
+   * @param {int} direction
    */
-  turn() {
-
+  turn(direction) {
+    // todo make sure its not going back on itself
+    this.headDirection = direction;
   }
 
   /**
