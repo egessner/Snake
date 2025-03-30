@@ -40,10 +40,7 @@ class Snake {
    * that will be the game runner, not sure about tail detection yet
    */
   moveForward() {
-    const temp = [];
-    for (let i = 1; i < this.length; i++) {
-      temp.push(this.position[i-1]);
-    }
+    const temp = this.position.slice(0, -1);
 
     const curX = this.position[0][0];
     const curY = this.position[0][1];
@@ -70,8 +67,9 @@ class Snake {
    * @param {int} direction
    */
   turn(direction) {
-    // todo make sure its not going back on itself
-    this.headDirection = direction;
+    if (this.headDirection % 2 != direction % 2) {
+      this.headDirection = direction;
+    }
   }
 
   /**
@@ -79,7 +77,8 @@ class Snake {
    * position until the snake moves forward one.
    */
   grow() {
-
+    this.position.push(null);
+    this.length++;
   }
 
   /**
@@ -88,5 +87,13 @@ class Snake {
    */
   getPosition() {
     return this.position;
+  }
+
+  /**
+   * @description retrun the heads position
+   * @return {Array} heads x,y position
+   */
+  getHeadPosition() {
+    return this.position[0];
   }
 }

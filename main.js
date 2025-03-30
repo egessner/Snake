@@ -1,16 +1,3 @@
-/** TODO
- * - Determine size of grid
- * - create grid
- * - function to randomly assing 'apple' to square on grid
- * - somehow we need to keep track of where the snake is
- *  - snake class - this will help with scaling too
- * - movement of the snake should be pretty simmple
- *  - move forward one square at a set interval
- *  - how do we want to handle turning? 
- *    - i guess we can just add an event listner on key presses and if 
- * its a turning key check if its a valid movement then update the snakes head
- * direction and then when move forward is called we will move forward in head direction
- */
 /* eslint linebreak-style: ['error', 'windows'] */
 /* GLOBALS */
 const SQUARESIZE = 20;
@@ -28,15 +15,18 @@ let grid;
 let requestID;
 let score;
 let scoreLabel;
-let apples;
+let apple;
 let snake;
+let gameOver;
 
 /**
  * @description set up the game of snake
  */
 function init() {
+  gameOver = false;
   mainCanvas = document.getElementById('mainCanvas');
   button = document.getElementById('restartButton');
+  scoreLabel = document.getElementById('scoreLabel');
   context = mainCanvas.getContext('2d');
 
   then = Date.now();
@@ -49,11 +39,12 @@ function init() {
   snake = new Snake(20, 20, 10);
   console.log(snake.headDirection);
   // spawn apple
+  spawnApple();
 
   updateGrid();
-  // printGrid();
+  printGrid();
 
-  draw();
+  run();
 
   document.addEventListener('keypress', onKeyPress);
   button.addEventListener('click', main);
@@ -67,16 +58,19 @@ function init() {
 function createGrid(width, height) {
   grid = [];
   for (let h = 0; h < height; h++) {
-    grid.push(new Array(width).fill(0));
+    grid.push(new Array(width).fill(3));
   }
+  clearGrid();
 }
 
 /**
  * @description clear the grid, not the most elegant way of updating locations
  */
 function clearGrid() {
-  for (let i = 0; i < grid.length; i++) {
-    grid[i].fill(0);
+  for (let i = 1; i < grid.length-1; i++) {
+    for (let k = 1; k < grid[i].length-1; k++) {
+      grid[i][k] = 0;
+    }
   }
 }
 
@@ -90,6 +84,21 @@ function printGrid() {
 }
 
 /**
+ * @description spawns an apple on the game
+ */
+function spawnApple() {
+  let y = Math.ceil(Math.random() * grid.length-1);
+  let x = Math.ceil(Math.random() * grid[0].length-1);
+  while (grid[y][x] == 1 || grid[y][x] == 3) {
+    y = Math.ceil(Math.random() * grid.length-1);
+    x = Math.ceil(Math.random() * grid[0].length-1);
+  }
+  apple = [x, y];
+  score++;
+  updateScore(); // bad practice
+}
+
+/**
  * @description update grid with snake location and apple
  */
 function updateGrid() {
@@ -97,16 +106,45 @@ function updateGrid() {
   // first the snake
   const snakePos = snake.getPosition();
   for (let i = 0; i < snakePos.length; i++) { // iterate the snake pos
+    if (!snakePos[i]) {
+      break;
+    }
     const snakeX = snakePos[i][0];
     const snakeY = snakePos[i][1];
     grid[snakeY][snakeX] = 1;
+  }
+  // next the apple
+  grid[apple[1]][apple[0]] = 2; // ugly!
+}
+
+/**
+ * @description detect collision or apple consumption
+ * we track the snake in two places, snake class and grid
+ * so before we update the grid we can use the snake class to see if
+ * it will hit anything
+ */
+function detectEvent() {
+  // all we need to look at is the head, 3 cases
+  // tail, border, apple
+  const headPos = snake.getHeadPosition();
+  switch (grid[headPos[1]][headPos[0]]) {
+    case 1: // tail
+      killGame();
+      break;
+    case 2: // apple
+      snake.grow();
+      spawnApple();
+      break;
+    case 3: // border
+      killGame();
+      break;
   }
 }
 
 /**
  * @description draw the game boi
  */
-function draw() {
+function run() {
   now = Date.now();
   delta = now - then;
   if (delta > INTERVAL) {
@@ -115,46 +153,48 @@ function draw() {
 
     if (framecount >= 5) {
       snake.moveForward();
+      detectEvent();
       framecount = 0;
     }
-
-    context.fillStyle = '#ffffff';
-    context.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
-    context.strokeRect(0, 0, mainCanvas.width, mainCanvas.height);
-    updateGrid();
-    drawOutline();
-    drawSnake();
+    if (!gameOver) {
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+      context.strokeRect(0, 0, mainCanvas.width, mainCanvas.height);
+      updateGrid();
+      draw();
+    }
   }
-  requestID = requestAnimationFrame(draw);
+  if (!gameOver) {
+    requestID = requestAnimationFrame(run);
+  }
 }
 
 /**
- * @description draw outline of main canvas
+ * @description draw the game
  */
-function drawOutline() {
+function draw() {
+  // outline
   context.strokeRect(0, 0, mainCanvas.width, mainCanvas.height);
   // draw outline of each square, might comment out later
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[y].length; x++) {
+      if (grid[y][x] == 3) {
+        context.fillStyle = '#666565';
+        context.fillRect(x * SQUARESIZE, y * SQUARESIZE,
+            SQUARESIZE, SQUARESIZE);
+      } else if (grid[y][x] == 1) {
+        context.fillStyle = '#37942b';
+        context.fillRect(x * SQUARESIZE, y * SQUARESIZE,
+            SQUARESIZE, SQUARESIZE);
+      } else if (grid[y][x] == 2) {
+        context.fillStyle = '#e84d2a';
+        context.fillRect(x * SQUARESIZE, y * SQUARESIZE,
+            SQUARESIZE, SQUARESIZE);
+      }
+      context.strokeStyle = '#b1b3b1';
       context.strokeRect(x * SQUARESIZE, y * SQUARESIZE,
           SQUARESIZE, SQUARESIZE);
     }
-  }
-}
-
-/**
- * @description draw the snake
- */
-function drawSnake() {
-  const snakePos = snake.getPosition();
-  for (let i = 0; i < snakePos.length; i++) { // iterate the snake pos
-    const snakeX = snakePos[i][0];
-    const snakeY = snakePos[i][1];
-    context.fillStyle = '#008000';
-    context.fillRect(snakeX * SQUARESIZE, snakeY * SQUARESIZE,
-        SQUARESIZE, SQUARESIZE);
-    context.strokeRect(snakeX * SQUARESIZE, snakeY * SQUARESIZE,
-        SQUARESIZE, SQUARESIZE);
   }
 }
 
@@ -184,10 +224,28 @@ function onKeyPress(keypress) {
 }
 
 /**
+ * @description update the score
+ */
+function updateScore() {
+  scoreLabel.innerHTML = 'Score ' + score;
+}
+
+/**
+ * @description
+ */
+function killGame() {
+  gameOver = true;
+  console.log('game over');
+  printGrid();
+  cancelAnimationFrame(requestID);
+  document.removeEventListener('keypress', onKeyPress);
+}
+
+/**
  * @description main
  */
 function main() {
   init();
-  requestID = requestAnimationFrame(draw);
+  requestID = requestAnimationFrame(run);
 }
 main();
