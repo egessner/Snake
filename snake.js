@@ -73,8 +73,8 @@ class Snake {
   }
 
   /**
-   * @description grow the snake array by one, the new square will be at a null
-   * position until the snake moves forward one.
+   * @description grow the snake array by one, the new square will have a null
+   * value until the snake moves forward one.
    */
   grow() {
     this.position.push(null);

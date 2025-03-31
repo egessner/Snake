@@ -1,7 +1,7 @@
 /* eslint linebreak-style: ['error', 'windows'] */
 /* GLOBALS */
 const SQUARESIZE = 20;
-const FPS = 30;
+const FPS = 30; // why on earth does snake need to be 30 fps? cause fuck it
 const INTERVAL = 1000 / FPS;
 
 let mainCanvas;
@@ -37,12 +37,11 @@ function init() {
   createGrid(40, 40);
   // create the snake
   snake = new Snake(20, 20, 10);
-  console.log(snake.headDirection);
   // spawn apple
   spawnApple();
 
   updateGrid();
-  printGrid();
+  // printGrid();
 
   run();
 
@@ -236,7 +235,7 @@ function updateScore() {
 function killGame() {
   gameOver = true;
   console.log('game over');
-  printGrid();
+  // printGrid();
   cancelAnimationFrame(requestID);
   document.removeEventListener('keypress', onKeyPress);
 }
